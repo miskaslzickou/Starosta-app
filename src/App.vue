@@ -10,8 +10,8 @@ import { LayoutDashboard, Bell, BarChart2, Settings } from 'lucide-vue-next'
 
    <nav class="sidebar"> 
     <h2>Menu</h2>
-    <router-link class="nav-link" to="/">   <LayoutDashboard/> Projekty</router-link>
-       <router-link class="nav-link" to="/upozorneni"> <Bell/> Upozornění</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/">   <LayoutDashboard/> Projekty</router-link>
+       <router-link class="nav-link" @auxclick.prevent to="/upozorneni"> <Bell/> Upozornění</router-link>
   
     </nav>
     <main class="content">
