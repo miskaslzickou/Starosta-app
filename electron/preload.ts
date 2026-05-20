@@ -22,3 +22,10 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+// preload.ts
+contextBridge.exposeInMainWorld('api', {
+  loadProjects: () => ipcRenderer.invoke('load-projects'),
+  saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
+  loadSettings: () => ipcRenderer.invoke('load-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+})

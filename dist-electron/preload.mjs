@@ -20,3 +20,9 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // You can expose other APTs you need here.
   // ...
 });
+electron.contextBridge.exposeInMainWorld("api", {
+  loadProjects: () => electron.ipcRenderer.invoke("load-projects"),
+  saveProjects: (projects) => electron.ipcRenderer.invoke("save-projects", projects),
+  loadSettings: () => electron.ipcRenderer.invoke("load-settings"),
+  saveSettings: (settings) => electron.ipcRenderer.invoke("save-settings", settings)
+});

@@ -1,12 +1,10 @@
 <script setup>
-
-
-defineProps(['number', 'title','color'])
+defineProps(['number', 'title', 'color'])
 </script>
 
 <template>
   <div class="stat-card">
-    <div class="icon-box":style="{ backgroundColor: color+ '22', color: color }">
+    <div class="icon-box" :style="{ backgroundColor: color + '22', color: color }">
       <slot name="icon"></slot>
     </div>
     <div>
@@ -21,11 +19,13 @@ defineProps(['number', 'title','color'])
   display: flex;
   align-items: center;
   gap: 16px;
-  background-color: #1c1c21;
+  background-color: var(--bg-surface);
   border-radius: 12px;
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   padding: 20px;
+  color: var(--text-primary);
 }
+
 .stat-card:hover {
   border: 1px solid v-bind(color);
   transition-duration: 0.3s;
@@ -35,7 +35,6 @@ defineProps(['number', 'title','color'])
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background-color: #2a2a35;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -54,6 +53,6 @@ defineProps(['number', 'title','color'])
 
 .title {
   font-size: 13px;
-  color: #888;
+  color: var(--text-muted);
 }
 </style>

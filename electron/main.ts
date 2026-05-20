@@ -1,12 +1,34 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
+import fs from 'fs'
 import path from 'node:path'
-import { Menu } from 'electron'
+const dataPath = path.join(app.getPath('userData'), 'projects.json')
+const settingsPath=path.join(app.getPath('userData'),'settings.json')
+
 Menu.setApplicationMenu(null)
 const require = createRequire(import.meta.url)
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+export function loadProjects() {
+  if (!fs.existsSync(dataPath)) return []
+  return JSON.parse(fs.readFileSync(dataPath, 'utf-8'))
+}
+
+export function saveProjects(projects) {
+  fs.writeFileSync(dataPath, JSON.stringify(projects, null, 2))
+}
+export function loadSettings() {
+  if (!fs.existsSync(settingsPath)) return null
+  return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
+}
+
+export function saveSettings(settings) {
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2))
+}
+
+
 
 // The built directory structure
 //
@@ -47,6 +69,11 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
+
+  ipcMain.handle('load-projects', () => loadProjects())
+  ipcMain.handle('save-projects', (_event, projects) => saveProjects(projects))
+  ipcMain.handle('load-settings',()=>loadSettings())
+  ipcMain.handle('save-settings',(_event,settings)=>saveSettings(settings))
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
