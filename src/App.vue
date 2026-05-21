@@ -23,7 +23,7 @@ function toggleTheme() {
   <nav class="sidebar">
     <h2>Menu</h2>
     <router-link class="nav-link" @auxclick.prevent to="/"><LayoutDashboard /> Projekty</router-link>
-    <router-link class="nav-link" @auxclick.prevent to="/upozorneni"><Bell /> Upozornění</router-link>
+    <!-- <router-link class="nav-link" @auxclick.prevent to="/upozorneni"><Bell /> Upozornění</router-link> -->
   </nav>
 
   <div class="main-wrapper">

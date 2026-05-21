@@ -1,6 +1,7 @@
 <script setup>
 import { useProjectsStore } from '../stores/projects'
 import { ref } from 'vue'
+import {Trash, Trash2} from 'lucide-vue-next'
 import{validateDate} from'../utils/util'
 const props = defineProps(['projekt'])
 const store = useProjectsStore()
@@ -28,14 +29,24 @@ function saveEditedProject() {
   store.editProject(props.projekt.id, formData.value)
   emit('close')
 }
+function deleteProject(){
+  store.deleteProject(props.projekt.id)
+  emit('close')
+}
 </script>
 
 <template>
   <div class="modal-overlay">
     <div class="modal">
-      <h2 v-if="props.projekt == null">Nový projekt</h2>
-      <h2 v-else>Upravit projekt {{ formData.nazev }}</h2>
-
+      <div class="modal-header">
+        <h2 v-if="props.projekt == null">Nový projekt</h2>
+        <h2 v-else>Upravit projekt {{ formData.nazev }}</h2>
+        <button v-if="props.projekt != null" @click="deleteProject" class="delete-button">
+          <Trash2 :size="16" /> Smazat
+        </button>
+      </div>
+     
+      
       <section class="form-section">
         <h3>Účastníci projektu</h3>
         <div class="fields cols-3">
@@ -242,5 +253,22 @@ function saveEditedProject() {
 .save-button {
   background-color: #32c251;
   color: #f8f8fa;
+}
+.delete-button{
+   background-color: #c23243;
+   color: #f8f8fa;
+ display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.modal h2 {
+  margin: 0;
 }
 </style>
