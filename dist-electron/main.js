@@ -1,12 +1,21 @@
 import { app, Menu, BrowserWindow, Tray, ipcMain, Notification } from "electron";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import fs from "fs";
 import path from "node:path";
 const dataPath = path.join(app.getPath("userData"), "projects.json");
+const vehiclesPath = path.join(app.getPath("userData"), "vehicles.json");
 const settingsPath = path.join(app.getPath("userData"), "settings.json");
 Menu.setApplicationMenu(null);
-createRequire(import.meta.url);
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+}
+app.on("second-instance", () => {
+  if (win) {
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+  }
+});
 const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
 const sentNotifications = /* @__PURE__ */ new Set();
 function loadProjects() {
@@ -14,8 +23,14 @@ function loadProjects() {
   return JSON.parse(fs.readFileSync(dataPath, "utf-8"));
 }
 function saveProjects(projects) {
-  checkProjects();
   fs.writeFileSync(dataPath, JSON.stringify(projects, null, 2));
+}
+function loadVehicles() {
+  if (!fs.existsSync(vehiclesPath)) return [];
+  return JSON.parse(fs.readFileSync(vehiclesPath, "utf-8"));
+}
+function saveVehicles(vehicles) {
+  fs.writeFileSync(vehiclesPath, JSON.stringify(vehicles, null, 2));
 }
 function loadSettings() {
   if (!fs.existsSync(settingsPath)) return null;
@@ -24,21 +39,54 @@ function loadSettings() {
 function saveSettings(settings) {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 }
+const sectionLabels = {
+  projekt: "Projekt",
+  vyberoveRizeni: "Výběrové řízení",
+  dotace: "Dotace",
+  zhotovitel: "Zhotovitel"
+};
+function checkVehicles() {
+  if (!fs.existsSync(vehiclesPath)) return;
+  const vehicles = JSON.parse(fs.readFileSync(vehiclesPath, "utf-8"));
+  const now = /* @__PURE__ */ new Date();
+  vehicles.forEach((v) => {
+    const checks = [
+      { field: "technicka", title: "Vozidlo – Technická prohlídka" },
+      { field: "pojisteni", title: "Vozidlo – Pojištění" }
+    ];
+    for (const { field, title } of checks) {
+      if (!v[field] || !v.upozorneni) continue;
+      const termín = new Date(v[field]);
+      const key = `${v.id}-${field}`;
+      const diffMs = termín.getTime() - now.getTime();
+      if (diffMs <= v.upozorneni && diffMs > -864e5 * 30 && !sentNotifications.has(key)) {
+        sentNotifications.add(key);
+        new Notification({
+          title,
+          body: `${v.nazev} (${v.spz})`
+        }).show();
+      }
+    }
+  });
+}
 function checkProjects() {
   if (!fs.existsSync(dataPath)) return;
   const projects = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-  const dnes = /* @__PURE__ */ new Date();
+  const now = /* @__PURE__ */ new Date();
   projects.forEach((p) => {
-    if (!p.ukonceni || !p.upozorneni) return;
-    const ukonceni = new Date(p.ukonceni);
-    const rozdil = ukonceni.getTime() - dnes.getTime();
-    const key = `${p.id}-${p.upozorneni}`;
-    if (rozdil > 0 && rozdil <= Number(p.upozorneni) && !sentNotifications.has(key)) {
-      sentNotifications.add(key);
-      new Notification({
-        title: "Projekt končí brzy",
-        body: `${p.nazev} končí ${p.ukonceni}`
-      }).show();
+    var _a;
+    for (const sekce of ["projekt", "vyberoveRizeni", "dotace", "zhotovitel"]) {
+      const terminy = (_a = p[sekce]) == null ? void 0 : _a.terminy;
+      if (!(terminy == null ? void 0 : terminy.upozorneni)) continue;
+      const upozorneniDate = new Date(terminy.upozorneni);
+      const key = `${p.id}-${sekce}-${terminy.upozorneni}`;
+      if (now >= upozorneniDate && !sentNotifications.has(key)) {
+        sentNotifications.add(key);
+        new Notification({
+          title: `Upozornění – ${sectionLabels[sekce]}`,
+          body: `${p.nazev}`
+        }).show();
+      }
     }
   });
 }
@@ -47,6 +95,7 @@ const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
+let isQuitting = false;
 let win;
 function createWindow() {
   win = new BrowserWindow({
@@ -56,8 +105,10 @@ function createWindow() {
     }
   });
   win.on("close", (e) => {
-    e.preventDefault();
-    win == null ? void 0 : win.hide();
+    if (!isQuitting) {
+      e.preventDefault();
+      win == null ? void 0 : win.hide();
+    }
   });
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
@@ -69,6 +120,8 @@ function createWindow() {
   }
   ipcMain.handle("load-projects", () => loadProjects());
   ipcMain.handle("save-projects", (_event, projects) => saveProjects(projects));
+  ipcMain.handle("load-vehicles", () => loadVehicles());
+  ipcMain.handle("save-vehicles", (_event, vehicles) => saveVehicles(vehicles));
   ipcMain.handle("load-settings", () => loadSettings());
   ipcMain.handle("save-settings", (_event, settings) => saveSettings(settings));
 }
@@ -87,6 +140,12 @@ let tray = null;
 app.whenReady().then(() => {
   app.setLoginItemSettings({ openAtLogin: true });
   createWindow();
+  checkProjects();
+  checkVehicles();
+  setInterval(() => {
+    checkProjects();
+    checkVehicles();
+  }, 2 * 60 * 1e3);
   tray = new Tray(path.join(process.env.VITE_PUBLIC, "logo.png"));
   tray.setToolTip("Stavební povolení");
   tray.setContextMenu(Menu.buildFromTemplate([
@@ -95,8 +154,9 @@ app.whenReady().then(() => {
   ]));
   tray.on("click", () => win == null ? void 0 : win.show());
 });
-app.setAppUserModelId("Starosta - Stavební povolení");
+app.setAppUserModelId("Starosta - Databáze věcí");
 app.on("before-quit", () => {
+  isQuitting = true;
 });
 export {
   MAIN_DIST,
@@ -104,6 +164,8 @@ export {
   VITE_DEV_SERVER_URL,
   loadProjects,
   loadSettings,
+  loadVehicles,
   saveProjects,
-  saveSettings
+  saveSettings,
+  saveVehicles
 };

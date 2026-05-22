@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
 // preload.ts
 contextBridge.exposeInMainWorld('api', {
   loadProjects: () => ipcRenderer.invoke('load-projects'),
-  saveProjects: (projects) => ipcRenderer.invoke('save-projects', projects),
+  saveProjects: (projects:any) => ipcRenderer.invoke('save-projects', projects),
   loadSettings: () => ipcRenderer.invoke('load-settings'),
-  saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
+  saveSettings: (settings:any) => ipcRenderer.invoke('save-settings', settings),
 })

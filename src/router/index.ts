@@ -1,12 +1,15 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
-import Projekty from '../views/Projekty.vue'
+
 
 const router = createRouter({
   history: createWebHashHistory(), // hash history je důležité pro Electron!
   routes: [
-    { path: '/', component: Projekty },
+    { path: '/', component:() => import('../views/Projekty.vue')},
+    { path:'/vozidla',component:()=> import('../views/Vozidla.vue')},
+    { path:'/stavby',component:()=>import('../views/Stavby.vue') },
+    {path:'/smlouvy',component:()=>import('../views/Smlouvy.vue')},
     { path: '/upozorneni', component: () => import('../views/Upozorneni.vue') },
-   
+    {path:'/nastaveni',component:()=> import('../views/Nastaveni.vue')}
     
   ]
 })

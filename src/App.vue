@@ -1,14 +1,26 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { LayoutDashboard, Bell, Moon, Sun, Search, Plus } from 'lucide-vue-next'
+import { Moon, Sun, Search, Plus, Settings, BrickWall, CarFront, Building, Signature } from 'lucide-vue-next'
 import { useProjectsStore } from './stores/projects'
 import { useSettingsStore } from './stores/settings'
 import ProjectModal from './components/ProjectModal.vue'
+import VehicleModal from './components/VehicleModal.vue'
+import { useRoute } from 'vue-router'
 
 const store = useProjectsStore()
 const settingsStore = useSettingsStore()
+const route = useRoute()
 const isDark = computed(() => settingsStore.settings.darkMode)
 const modalOpen = ref(false)
+
+const pageConfigs = {
+  '/': { label: 'Nový projekt', modal: 'projekt' },
+  '/vozidla': { label: 'Nové vozidlo', modal: 'vozidlo' },
+  '/stavby': { label: 'Nová stavba', modal: 'stavba' },
+  '/smlouvy': { label: 'Nová smlouva', modal: 'smlouva' },
+}
+
+const pageConfig = computed(() => pageConfigs[route.path] ?? null)
 
 watch(isDark, (dark) => {
   document.body.classList.toggle('light', !dark)
@@ -22,19 +34,23 @@ function toggleTheme() {
 <template>
   <nav class="sidebar">
     <h2>Menu</h2>
-    <router-link class="nav-link" @auxclick.prevent to="/"><LayoutDashboard /> Projekty</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/"><BrickWall/> Stavební řízení</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/vozidla"><CarFront/> Vozidla</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/stavby"><Building/> Budovy</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/smlouvy"><Signature/>Nájemní + Paktovní sml. </router-link>
     <!-- <router-link class="nav-link" @auxclick.prevent to="/upozorneni"><Bell /> Upozornění</router-link> -->
+     <router-link class="nav-link" @auxclick.prevent to="/nastaveni"><Settings/> Nastavení</router-link>
   </nav>
 
   <div class="main-wrapper">
-    <div class="header">
+    <div class="header" >
       <div class="search-wrapper">
         <Search class="search-icon" />
         <input v-model="store.search" placeholder="Hledat projekty..." />
       </div>
       <div class="header-actions">
-        <button class="new-project" @click="modalOpen = true">
-          <Plus :size="16" /> Nový projekt
+        <button v-if="pageConfig" class="new-project" @click="modalOpen = true">
+          <Plus :size="16" /> {{ pageConfig.label }}
         </button>
         <button @click="toggleTheme" class="theme-toggle">
           <Moon v-if="isDark" />
@@ -48,7 +64,8 @@ function toggleTheme() {
     </main>
   </div>
 
-  <ProjectModal :projekt="null" v-if="modalOpen" @close="modalOpen = false" />
+  <ProjectModal :projekt="null" v-if="modalOpen && pageConfig?.modal === 'projekt'" @close="modalOpen = false" />
+  <VehicleModal :vozidlo="null" v-if="modalOpen && pageConfig?.modal === 'vozidlo'" @close="modalOpen = false" />
 </template>
 
 <style>
@@ -81,12 +98,15 @@ nav h2 {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0; /* důležité pro flex children */
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  box-sizing: border-box;
   padding: 12px 40px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -103,6 +123,7 @@ nav h2 {
   flex: 1;
   overflow-y: auto;
   padding: 40px;
+
   box-sizing: border-box;
   background-color: var(--bg-base);
 }

@@ -1,4 +1,8 @@
+body, #app {
+  width: 100%;
+}
 body {
+ 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -33,6 +37,7 @@ body {
 }
 
 body.light {
+    
   --bg-base:     #f8f8f4;
   --bg-surface:  #f8f7ed;
   --bg-elevated: #ebebf0;

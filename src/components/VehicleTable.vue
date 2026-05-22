@@ -1,48 +1,36 @@
 <script setup>
 import { useVueTable, FlexRender, getCoreRowModel, getSortedRowModel } from '@tanstack/vue-table'
-import { useProjectsStore } from '../stores/projects'
-const store = useProjectsStore()
-const stavBarvy = {
-  'Probíhá': '#3b82f6',
-  'Stavba zahájena': '#f59e0b',
-  'Hotovo': '#22c55e',
-}
+import { useVehicleStore } from '../stores/vehicles'
 
-function formatDatetime(value) {
-  if (!value) return ''
-  const [datePart, timePart] = value.split('T')
-  if (!datePart) return ''
-  const [rok, mesic, den] = datePart.split('-')
-  return timePart ? `${den}. ${mesic}. ${rok} ${timePart}` : `${den}. ${mesic}. ${rok}`
+const store = useVehicleStore()
+const emit = defineEmits(['rowClick'])
+
+function getDateColor(datum, upozorneni) {
+  if (!datum) return ''
+  const technicka = new Date(datum)
+  const dnes = new Date()
+  const rozdil = technicka.getTime() - dnes.getTime()
+  
+  if (rozdil < 0) return '#ef4444'                        // propadlé - červená
+  if (rozdil <= Number(upozorneni)) return '#f59e0b'      // blíží se - oranžová
+  return '#22c55e'                                         // ok - zelená
 }
 
 const columns = [
-  { accessorKey: 'nazev', header: 'Projekt' },
-  {
-    id: 'zhotovitel',
-    header: 'Zhotovitel',
-    accessorFn: row => row.zhotovitel?.kontakty?.[0]?.jmeno ?? '',
-  },
-  {
-    id: 'ukonceniRealizace',
-    header: 'Ukončení realizace',
-    accessorFn: row => row.zhotovitel?.terminy?.ukonceniRealizace ?? '',
-    cell: info => formatDatetime(info.getValue()),
-  },
-  {
-    id: 'odevzdaniNabidek',
-    header: 'Odevzdání nabídek VŘ',
-    accessorFn: row => row.vyberoveRizeni?.terminy?.odevzdaniNabidek ?? '',
-    cell: info => formatDatetime(info.getValue()),
-  },
-  {
-    id: 'dotaceUkonceni',
-    header: 'Dotace – ukončení',
-    accessorFn: row => row.dotace?.terminy?.ukonceniRealizace ?? '',
-    cell: info => formatDatetime(info.getValue()),
-  },
-  { accessorKey: 'stav', header: 'Stav' },
-  { accessorKey: 'posledniStav', header: 'Poslední stav' },
+  { accessorKey: 'nazev', header: 'Název' },
+  { accessorKey: 'vin', header: 'VIN' },
+  {accessorKey:'upozorneni', header:'Upozornění',accessorFn: row => {
+      const upozorneni = parseInt(row.upozorneni)
+      if (upozorneni === 1209600000) return 'Dva týdny před termínem'
+      if (upozorneni === 604800000) return 'Týden před termínem'
+      if (upozorneni === 2592000000) return 'Měsíc před termínem'
+      return ''
+    } },
+  {accessorKey:'technicka', header:'Technická'},
+  {accessorKey:'pojisteni', header:'Pojištění'},
+  {accessorKey:'poznamky',header:'Poznámky'},
+  {acccesorKey:'opravy',header:'Opravy'}
+
 ]
 
 const table = useVueTable({
@@ -69,13 +57,10 @@ const table = useVueTable({
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in table.getRowModel().rows" :key="row.id" @click="$emit('rowClick', row.original)">
+        <tr v-for="row in table.getRowModel().rows" :key="row.id" @click="emit('rowClick', row.original)">
           <td v-for="cell in row.getVisibleCells()" :key="cell.id">
-            <span v-if="cell.column.id === 'stav'" class="stav-badge" :style="{ backgroundColor: stavBarvy[cell.getValue()] + '33', color: stavBarvy[cell.getValue()] }">
+            <span v-if="cell.column.id === 'technicka'" :style="{ color: getDateColor(cell.getValue(), row.original.upozorneni) }">
               {{ cell.getValue() }}
-            </span>
-            <span v-else-if="cell.column.id === 'dok' || cell.column.id === 'stavPov'" :style="{ color: cell.getValue() ? '#22c55e' : '#ef4444' }">
-              <component :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </span>
             <span v-else>
               <component :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
@@ -86,6 +71,8 @@ const table = useVueTable({
     </table>
   </div>
 </template>
+
+
 
 <style scoped>
 .table-wrapper {

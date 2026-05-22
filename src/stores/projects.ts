@@ -4,15 +4,13 @@ import { ref, computed ,watch} from 'vue'
 
 
 export const useProjectsStore = defineStore('projekty', () => {
-  const projects = ref([
-    {  nazev: 'Demolice staré hasičárny', zhotovitel: 'Demo-Stav s.r.o. 703',projektant:'', dotace: null, dok: true, stavPov: true,ziskani: '2023-01-01', ukonceni: '2026-05-30', stav: 'Probíhá', posledniStav: 'Výběrové řízení na dodavatele',upozorneni:1209600000,id:crypto.randomUUID()},
-  ])
+  const projects = ref<any[]>([])
   const search = ref('')
-  function addProjects( project) {
+  function addProjects( project:any) {
     projects.value = [...projects.value, { id: crypto.randomUUID(), ...project }]
   }
 
-  function editProject(id, data) {
+  function editProject(id:any, data:any) {
     projects.value = projects.value.map(p => p.id === id ? { ...p, ...data } : p)
   }
   async function init() {
@@ -33,7 +31,7 @@ export const useProjectsStore = defineStore('projekty', () => {
       localStorage.setItem('projects', JSON.stringify(plain))
     }
   }, { deep: true })
-  function deleteProject(id) {
+  function deleteProject(id:any) {
     projects.value=projects.value.filter(p => p.id !== id)
   }
  
@@ -46,7 +44,8 @@ export const useProjectsStore = defineStore('projekty', () => {
 
   if (search.value) {
     result = result.filter(p =>
-      p.nazev.toLowerCase().includes(search.value.toLowerCase()) || p.zhotovitel.toLowerCase().includes(search.value.toLowerCase()) ||p.projektant.toLowerCase().includes(search.value.toLowerCase())
+      p.nazev?.toLowerCase().includes(search.value.toLowerCase()) ||
+      p.posledniStav?.toLowerCase().includes(search.value.toLowerCase())
     )
   }
 
