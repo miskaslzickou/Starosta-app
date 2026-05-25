@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useVehicleStore } from '../stores/vehicles'
 import { ref, computed } from 'vue'
 import { Trash2 } from 'lucide-vue-next'

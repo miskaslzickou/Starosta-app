@@ -1,45 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { useVueTable, FlexRender, getCoreRowModel, getSortedRowModel } from '@tanstack/vue-table'
 import { useVehicleStore } from '../stores/vehicles'
 
 const store = useVehicleStore()
 const emit = defineEmits(['rowClick'])
 
-function getDateColor(datum, upozorneni) {
+function getDateColor(datum: string, upozorneni: number): string {
   if (!datum) return ''
-  const technicka = new Date(datum)
-  const dnes = new Date()
-  const rozdil = technicka.getTime() - dnes.getTime()
-  
-  if (rozdil < 0) return '#ef4444'                        // propadlé - červená
-  if (rozdil <= Number(upozorneni)) return '#f59e0b'      // blíží se - oranžová
-  return '#22c55e'                                         // ok - zelená
+  const rozdil = new Date(datum).getTime() - Date.now()
+  if (rozdil < 0) return '#ef4444'
+  if (rozdil <= Number(upozorneni)) return '#f59e0b'
+  return '#22c55e'
 }
 
 const columns = [
   { accessorKey: 'nazev', header: 'Název' },
   { accessorKey: 'vin', header: 'VIN' },
-  {accessorKey:'upozorneni', header:'Upozornění',accessorFn: row => {
-      const upozorneni = parseInt(row.upozorneni)
-      if (upozorneni === 1209600000) return 'Dva týdny před termínem'
-      if (upozorneni === 604800000) return 'Týden před termínem'
-      if (upozorneni === 2592000000) return 'Měsíc před termínem'
+  {
+    id: 'upozorneni',
+    header: 'Upozornění',
+    accessorFn: (row: any) => {
+      const ms = parseInt(row.upozorneni)
+      if (ms === 1209600000) return 'Dva týdny před termínem'
+      if (ms === 604800000) return 'Týden před termínem'
+      if (ms === 2592000000) return 'Měsíc před termínem'
       return ''
-    } },
-  {accessorKey:'technicka', header:'Technická'},
-  {accessorKey:'pojisteni', header:'Pojištění'},
-  {accessorKey:'poznamky',header:'Poznámky'},
+    }
+  },
+  { accessorKey: 'technicka', header: 'Technická' },
+  { accessorKey: 'pojisteni', header: 'Pojištění' },
+  { accessorKey: 'poznamky', header: 'Poznámky' },
   {
     id: 'opravy',
     header: 'Opravy celkem',
     accessorFn: (row: any) => {
-      const opravy = row.opravy ?? []
+      const opravy: any[] = row.opravy ?? []
       if (!opravy.length) return '—'
       const total = opravy.reduce((s: number, o: any) => s + Number(o.cenaSDph ?? 0), 0)
       return `${opravy.length} × / ${total.toLocaleString('cs-CZ')} Kč`
     }
-  }
-
+  },
 ]
 
 const table = useVueTable({
@@ -68,12 +68,13 @@ const table = useVueTable({
       <tbody>
         <tr v-for="row in table.getRowModel().rows" :key="row.id" @click="emit('rowClick', row.original)">
           <td v-for="cell in row.getVisibleCells()" :key="cell.id">
-            <span v-if="cell.column.id === 'technicka'" :style="{ color: getDateColor(cell.getValue(), row.original.upozorneni) }">
+            <span
+              v-if="cell.column.id === 'technicka' || cell.column.id === 'pojisteni'"
+              :style="{ color: getDateColor(cell.getValue() as string, row.original.upozorneni) }"
+            >
               {{ cell.getValue() }}
             </span>
-            <span v-else>
-              <component :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-            </span>
+            <component v-else :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
           </td>
         </tr>
       </tbody>

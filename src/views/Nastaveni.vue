@@ -20,10 +20,7 @@ const adresaInput = ref('')
 
 const api = (window as any).api
 
-function openAddressDialog() {
-  adresaInput.value = settingsStore.settings.adresa
-  adresaDialog.value = true
-}
+
 
 function saveAddress() {
   settingsStore.settings.adresa = adresaInput.value.trim()
