@@ -5,6 +5,16 @@ import { useSmlouvyStore } from '../stores/smlouvy'
 const store = useSmlouvyStore()
 const emit = defineEmits(['rowClick'])
 
+function getDateColor(datum: string, upozorneni: number) {
+  if (!datum) return ''
+  const d = new Date(datum)
+  const dnes = new Date()
+  const rozdil = d.getTime() - dnes.getTime()
+  if (rozdil < 0) return '#ef4444'
+  if (rozdil <= Number(upozorneni)) return '#f59e0b'
+  return '#22c55e'
+}
+
 const druhyNajmu: Record<string, string> = {
   pozemek: 'Pozemek',
   nebytovy: 'Nebytový prostor',
@@ -49,7 +59,10 @@ const table = useVueTable({
       <tbody>
         <tr v-for="row in table.getRowModel().rows" :key="row.id" @click="emit('rowClick', row.original)">
           <td v-for="cell in row.getVisibleCells()" :key="cell.id">
-            <component :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+            <span v-if="cell.column.id === 'datumUkonceni'" :style="{ color: getDateColor(cell.getValue() as string, row.original.upozorneni) }">
+              {{ cell.getValue() }}
+            </span>
+            <component v-else :is="FlexRender" :render="cell.column.columnDef.cell" :props="cell.getContext()" />
           </td>
         </tr>
       </tbody>
