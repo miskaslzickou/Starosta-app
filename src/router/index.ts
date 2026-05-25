@@ -8,6 +8,7 @@ const router = createRouter({
     { path:'/vozidla',component:()=> import('../views/Vozidla.vue')},
     { path:'/stavby',component:()=>import('../views/Stavby.vue') },
     {path:'/smlouvy',component:()=>import('../views/Smlouvy.vue')},
+    { path: '/usneseni', component: () => import('../views/Usneseni.vue') },
     { path: '/upozorneni', component: () => import('../views/Upozorneni.vue') },
     {path:'/nastaveni',component:()=> import('../views/Nastaveni.vue')}
     

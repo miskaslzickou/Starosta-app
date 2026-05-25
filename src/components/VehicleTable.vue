@@ -29,7 +29,16 @@ const columns = [
   {accessorKey:'technicka', header:'Technická'},
   {accessorKey:'pojisteni', header:'Pojištění'},
   {accessorKey:'poznamky',header:'Poznámky'},
-  {acccesorKey:'opravy',header:'Opravy'}
+  {
+    id: 'opravy',
+    header: 'Opravy celkem',
+    accessorFn: (row: any) => {
+      const opravy = row.opravy ?? []
+      if (!opravy.length) return '—'
+      const total = opravy.reduce((s: number, o: any) => s + Number(o.cenaSDph ?? 0), 0)
+      return `${opravy.length} × / ${total.toLocaleString('cs-CZ')} Kč`
+    }
+  }
 
 ]
 

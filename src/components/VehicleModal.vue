@@ -1,6 +1,6 @@
 <script setup>
 import { useVehicleStore } from '../stores/vehicles'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Trash2 } from 'lucide-vue-next'
 
 const props = defineProps(['vozidlo'])
@@ -32,6 +32,11 @@ function deleteVehicle() {
   store.deleteVehicle(props.vozidlo.id)
   emit('close')
 }
+
+const totalRepairCost = computed(() => {
+  const opravy = formData.value.opravy ?? []
+  return opravy.reduce((sum: number, o: any) => sum + Number(o.cenaSDph ?? 0), 0)
+})
 </script>
 
 <template>
@@ -128,6 +133,10 @@ function deleteVehicle() {
   <button class="add-oprava-button" @click="formData.opravy.push({ druh: '', cenaBezDph: 0, cenaSDph: 0, datum: '' })">
     + Přidat opravu
   </button>
+
+  <div v-if="formData.opravy?.length" class="opravy-total">
+    Celkem (s DPH): <strong>{{ totalRepairCost.toLocaleString('cs-CZ') }} Kč</strong>
+  </div>
 </section>
       <div class="modal-buttons">
         <button class="close-button" @click="emit('close')">Zavřít</button>
@@ -306,5 +315,14 @@ function deleteVehicle() {
   color: var(--accent);
 }
 
+.opravy-total {
+  margin-top: 10px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-muted);
+}
 
+.opravy-total strong {
+  color: var(--text-primary);
+}
 </style>

@@ -2,15 +2,15 @@ import { defineStore } from 'pinia'
 import { watch, ref } from 'vue'
 
 export const useSettingsStore = defineStore('settings', () => {
-  const settings = ref({ darkMode: true })
+  const settings = ref({ darkMode: false, adresa: '' })
 
   async function init() {
     if ((window as any).api) {
       const loaded = await (window as any).api.loadSettings()
-      if (loaded) settings.value = loaded
+      if (loaded) settings.value = { ...settings.value, ...loaded }
     } else {
       const saved = localStorage.getItem('settings')
-      if (saved) settings.value = JSON.parse(saved)
+      if (saved) settings.value = { ...settings.value, ...JSON.parse(saved) }
     }
   }
 

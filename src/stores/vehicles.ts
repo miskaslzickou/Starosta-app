@@ -1,29 +1,25 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useSearchStore } from './search'
 
 export const useVehicleStore = defineStore('vehicles', () => {
- const vehicles = ref([
-  {
-    nazev: 'Ford Transit 2019',
-    vin: 'WF0XXXTTGXKA12345',
-    spz: '1Z2 3456',
-    technicka: '2025-06-15',
-    pojisteni: '2026-01-10',
-    upozorneni: 604800000,
-    poznamky: 'Pravidelná údržba každých 10 000 km',
-    opravy: [
-      {
-        druh: 'Výměna oleje',
-        cenaBezDph: 1500,
-        cenaSDph: 1815,
-        datum: '2024-03-10',
-      }
-    ]
-  }
-])
+ const vehicles = ref<any[]>([])
 
   const vehicleCount = computed(() => vehicles.value.length)
-  const filtred = computed(() => vehicles.value)
+  
+ const filtred = computed(() => {
+   let result = vehicles.value
+  const searchStore = useSearchStore()
+  
+   if (searchStore.query) {
+     result = result.filter(p =>
+       p.nazev?.toLowerCase().includes(searchStore.query.toLowerCase()) ||
+       p.vin?.toLowerCase().includes(searchStore.query.toLowerCase())
+     )
+   }
+ 
+   return result
+   })
 
   function addVehicle(vehicle: any) {
     vehicles.value = [...vehicles.value, { id: crypto.randomUUID(), ...vehicle }]
@@ -35,5 +31,24 @@ export const useVehicleStore = defineStore('vehicles', () => {
     vehicles.value = vehicles.value.filter((v: any) => v.id !== id)
   }
 
-  return { vehicles, vehicleCount, filtred, addVehicle, editVehicle, deleteVehicle }
+  async function init() {
+    if ((window as any).api) {
+      const loaded = await (window as any).api.loadVehicles()
+      if (loaded?.length) vehicles.value = loaded
+    } else {
+      const saved = localStorage.getItem('vehicles')
+      if (saved) vehicles.value = JSON.parse(saved)
+    }
+  }
+
+  watch(vehicles, (val) => {
+    const plain = JSON.parse(JSON.stringify(val))
+    if ((window as any).api) {
+      (window as any).api.saveVehicles(plain)
+    } else {
+      localStorage.setItem('vehicles', JSON.stringify(plain))
+    }
+  }, { deep: true })
+
+  return { vehicles, vehicleCount, filtred, addVehicle, editVehicle, deleteVehicle, init }
 })

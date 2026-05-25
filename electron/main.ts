@@ -1,10 +1,13 @@
-import { app, BrowserWindow, ipcMain, Menu,Notification,Tray } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, Notification, Tray, dialog } from 'electron'
 import { fileURLToPath } from 'node:url'
 
 import fs from 'fs'
 import path from 'node:path'
 const dataPath = path.join(app.getPath('userData'), 'projects.json')
 const vehiclesPath = path.join(app.getPath('userData'), 'vehicles.json')
+const buildingsPath = path.join(app.getPath('userData'), 'buildings.json')
+const smlouvyPath = path.join(app.getPath('userData'), 'smlouvy.json')
+const usneseniPath = path.join(app.getPath('userData'), 'usneseni.json')
 const settingsPath=path.join(app.getPath('userData'),'settings.json')
 
 Menu.setApplicationMenu(null)
@@ -41,6 +44,29 @@ export function saveVehicles(vehicles: any) {
   fs.writeFileSync(vehiclesPath, JSON.stringify(vehicles, null, 2))
 }
 
+export function loadBuildings() {
+  if (!fs.existsSync(buildingsPath)) return []
+  return JSON.parse(fs.readFileSync(buildingsPath, 'utf-8'))
+}
+
+export function saveBuildings(buildings: any) {
+  fs.writeFileSync(buildingsPath, JSON.stringify(buildings, null, 2))
+}
+export function loadSmlouvy() {
+  if (!fs.existsSync(smlouvyPath)) return []
+  return JSON.parse(fs.readFileSync(smlouvyPath, 'utf-8'))
+}
+export function saveSmlouvy(smlouvy: any) {
+  fs.writeFileSync(smlouvyPath, JSON.stringify(smlouvy, null, 2))
+}
+export function loadUsneseni() {
+  if (!fs.existsSync(usneseniPath)) return []
+  return JSON.parse(fs.readFileSync(usneseniPath, 'utf-8'))
+}
+export function saveUsneseni(usneseni: any) {
+  fs.writeFileSync(usneseniPath, JSON.stringify(usneseni, null, 2))
+}
+
 export function loadSettings() {
   if (!fs.existsSync(settingsPath)) return null
   return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'))
@@ -49,6 +75,56 @@ export function loadSettings() {
 export function saveSettings(settings:any) {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2))
 }
+
+export async function exportData(win: BrowserWindow) {
+  const { filePath, canceled } = await dialog.showSaveDialog(win, {
+    title: 'Exportovat zálohu',
+    defaultPath: `zaloha-${new Date().toISOString().slice(0, 10)}.json`,
+    filters: [{ name: 'JSON záloha', extensions: ['json'] }],
+  })
+  if (canceled || !filePath) return { success: false }
+
+  const backup: Record<string, any> = {}
+  const files: Record<string, string> = {
+    projects: dataPath,
+    vehicles: vehiclesPath,
+    buildings: buildingsPath,
+    smlouvy: smlouvyPath,
+    usneseni: usneseniPath,
+    settings: settingsPath,
+  }
+  for (const [key, p] of Object.entries(files)) {
+    backup[key] = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf-8')) : []
+  }
+  fs.writeFileSync(filePath, JSON.stringify(backup, null, 2))
+  return { success: true }
+}
+
+export async function importData(win: BrowserWindow) {
+  const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+    title: 'Importovat zálohu',
+    filters: [{ name: 'JSON záloha', extensions: ['json'] }],
+    properties: ['openFile'],
+  })
+  if (canceled || !filePaths[0]) return { success: false }
+
+  const backup = JSON.parse(fs.readFileSync(filePaths[0], 'utf-8'))
+  const files: Record<string, string> = {
+    projects: dataPath,
+    vehicles: vehiclesPath,
+    buildings: buildingsPath,
+    smlouvy: smlouvyPath,
+    usneseni: usneseniPath,
+    settings: settingsPath,
+  }
+  for (const [key, p] of Object.entries(files)) {
+    if (backup[key] !== undefined) {
+      fs.writeFileSync(p, JSON.stringify(backup[key], null, 2))
+    }
+  }
+  return { success: true }
+}
+
 const sectionLabels: Record<string, string> = {
   projekt: 'Projekt',
   vyberoveRizeni: 'Výběrové řízení',
@@ -63,7 +139,7 @@ function checkVehicles() {
 
   vehicles.forEach((v: any) => {
     const checks: { field: 'technicka' | 'pojisteni'; title: string }[] = [
-      { field: 'technicka', title: 'Vozidlo – Technická prohlídka' },
+      { field: 'technicka', title: 'STK – Brzy vyprší' },
       { field: 'pojisteni', title: 'Vozidlo – Pojištění' },
     ]
 
@@ -76,11 +152,37 @@ function checkVehicles() {
 
       if (diffMs <= v.upozorneni && diffMs > -86400000 * 30 && !sentNotifications.has(key)) {
         sentNotifications.add(key)
-        new Notification({
-          title,
-          body: `${v.nazev} (${v.spz})`
-        }).show()
+        let body: string
+        if (field === 'technicka') {
+          const days = Math.round(Math.abs(diffMs) / 86400000)
+          body = diffMs >= 0
+            ? `${v.nazev} (${v.spz}) – za ${days} dní`
+            : `${v.nazev} (${v.spz}) – vypršela před ${days} dny`
+        } else {
+          body = `${v.nazev} (${v.spz})`
+        }
+        new Notification({ title, body }).show()
       }
+    }
+  })
+}
+
+function checkSmlouvy() {
+  if (!fs.existsSync(smlouvyPath)) return
+  const smlouvy = JSON.parse(fs.readFileSync(smlouvyPath, 'utf-8'))
+  const now = new Date()
+  smlouvy.forEach((s: any) => {
+    if (!s.datumUkonceni || !s.upozorneni) return
+    const termin = new Date(s.datumUkonceni)
+    const key = `smlouva-${s.id}-ukonceni`
+    const diffMs = termin.getTime() - now.getTime()
+    if (diffMs <= s.upozorneni && diffMs > -86400000 * 30 && !sentNotifications.has(key)) {
+      sentNotifications.add(key)
+      const days = Math.round(Math.abs(diffMs) / 86400000)
+      const body = diffMs >= 0
+        ? `${s.najemnik} – za ${days} dní`
+        : `${s.najemnik} – vypršela před ${days} dny`
+      new Notification({ title: 'Smlouva – Blíží se ukončení', body }).show()
     }
   })
 }
@@ -162,8 +264,17 @@ win.on('close', (e) => {
   ipcMain.handle('save-projects', (_event, projects) => saveProjects(projects))
   ipcMain.handle('load-vehicles', () => loadVehicles())
   ipcMain.handle('save-vehicles', (_event, vehicles) => saveVehicles(vehicles))
+  ipcMain.handle('load-buildings', () => loadBuildings())
+  ipcMain.handle('save-buildings', (_event, buildings) => saveBuildings(buildings))
+  ipcMain.handle('load-smlouvy', () => loadSmlouvy())
+  ipcMain.handle('save-smlouvy', (_event, smlouvy) => saveSmlouvy(smlouvy))
+  ipcMain.handle('load-usneseni', () => loadUsneseni())
+  ipcMain.handle('save-usneseni', (_event, usneseni) => saveUsneseni(usneseni))
   ipcMain.handle('load-settings',()=>loadSettings())
   ipcMain.handle('save-settings',(_event,settings)=>saveSettings(settings))
+  ipcMain.handle('export-data', () => exportData(win!))
+  ipcMain.handle('import-data', () => importData(win!))
+  ipcMain.handle('relaunch', () => { app.relaunch(); app.exit() })
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -189,7 +300,8 @@ app.whenReady().then(() => {
   createWindow()
   checkProjects()
   checkVehicles()
-  setInterval(() => { checkProjects(); checkVehicles() }, 2 * 60 * 1000)
+  checkSmlouvy()
+  setInterval(() => { checkProjects(); checkVehicles(); checkSmlouvy() }, 2 * 60 * 1000)
   
   tray = new Tray(path.join(process.env.VITE_PUBLIC, 'logo.png'))
   tray.setToolTip('Stavební povolení')

@@ -1,6 +1,8 @@
 // src/stores/projekty.ts
 import { defineStore } from 'pinia'
 import { ref, computed ,watch} from 'vue'
+import { useSearchStore } from './search'
+
 
 
 export const useProjectsStore = defineStore('projekty', () => {
@@ -36,16 +38,17 @@ export const useProjectsStore = defineStore('projekty', () => {
   }
  
   const filtred = computed(() => {
+  const searchStore = useSearchStore()
   let result = projects.value
 
   if (activeFilter.value !== 'Vše') {
     result = result.filter(p => p.stav === activeFilter.value)
   }
 
-  if (search.value) {
+  if (searchStore.query) {
     result = result.filter(p =>
-      p.nazev?.toLowerCase().includes(search.value.toLowerCase()) ||
-      p.posledniStav?.toLowerCase().includes(search.value.toLowerCase())
+      p.nazev?.toLowerCase().includes(searchStore.query.toLowerCase()) ||
+      p.posledniStav?.toLowerCase().includes(searchStore.query.toLowerCase())
     )
   }
 

@@ -24,5 +24,16 @@ electron.contextBridge.exposeInMainWorld("api", {
   loadProjects: () => electron.ipcRenderer.invoke("load-projects"),
   saveProjects: (projects) => electron.ipcRenderer.invoke("save-projects", projects),
   loadSettings: () => electron.ipcRenderer.invoke("load-settings"),
-  saveSettings: (settings) => electron.ipcRenderer.invoke("save-settings", settings)
+  saveSettings: (settings) => electron.ipcRenderer.invoke("save-settings", settings),
+  loadVehicles: () => electron.ipcRenderer.invoke("load-vehicles"),
+  saveVehicles: (vehicles) => electron.ipcRenderer.invoke("save-vehicles", vehicles),
+  loadBuildings: () => electron.ipcRenderer.invoke("load-buildings"),
+  saveBuildings: (buildings) => electron.ipcRenderer.invoke("save-buildings", buildings),
+  loadSmlouvy: () => electron.ipcRenderer.invoke("load-smlouvy"),
+  saveSmlouvy: (smlouvy) => electron.ipcRenderer.invoke("save-smlouvy", smlouvy),
+  loadUsneseni: () => electron.ipcRenderer.invoke("load-usneseni"),
+  saveUsneseni: (usneseni) => electron.ipcRenderer.invoke("save-usneseni", usneseni),
+  exportData: () => electron.ipcRenderer.invoke("export-data"),
+  importData: () => electron.ipcRenderer.invoke("import-data"),
+  relaunch: () => electron.ipcRenderer.invoke("relaunch")
 });

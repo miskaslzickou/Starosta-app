@@ -1,34 +1,37 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Moon, Sun, Search, Plus, Settings, BrickWall, CarFront, Building, Signature } from 'lucide-vue-next'
-import { useProjectsStore } from './stores/projects'
+import { Moon, Sun, Search, Plus, Settings, BrickWall, CarFront, Building, Signature, ScrollText } from 'lucide-vue-next'
+import {useSearchStore} from './stores/search'
 import { useSettingsStore } from './stores/settings'
 import ProjectModal from './components/ProjectModal.vue'
 import VehicleModal from './components/VehicleModal.vue'
+import BuildingModal from './components/BuildingModal.vue'
+import SmlouvyModal from './components/SmlouvyModal.vue'
+import UsneseniModal from './components/UsneseniModal.vue'
 import { useRoute } from 'vue-router'
 
-const store = useProjectsStore()
+const searchStore = useSearchStore()
 const settingsStore = useSettingsStore()
 const route = useRoute()
-const isDark = computed(() => settingsStore.settings.darkMode)
 const modalOpen = ref(false)
 
-const pageConfigs = {
-  '/': { label: 'Nový projekt', modal: 'projekt' },
-  '/vozidla': { label: 'Nové vozidlo', modal: 'vozidlo' },
-  '/stavby': { label: 'Nová stavba', modal: 'stavba' },
-  '/smlouvy': { label: 'Nová smlouva', modal: 'smlouva' },
-}
-
-const pageConfig = computed(() => pageConfigs[route.path] ?? null)
-
+const isDark = computed(() => settingsStore.settings.darkMode)
 watch(isDark, (dark) => {
   document.body.classList.toggle('light', !dark)
 }, { immediate: true })
 
-function toggleTheme() {
-  settingsStore.settings.darkMode = !settingsStore.settings.darkMode
+const pageConfigs = {
+  '/': { label: 'Nový projekt', modal: 'projekt' },
+  '/vozidla': { label: 'Nové vozidlo', modal: 'vozidlo' },
+  '/stavby': { label: 'Nová stavba', modal: 'budova' },
+  '/smlouvy': { label: 'Nová smlouva', modal: 'smlouva' },
+  '/usneseni': { label: 'Nové usnesení', modal: 'usneseni' },
 }
+
+const pageConfig = computed(() => pageConfigs[route.path] ?? null)
+
+
+
 </script>
 
 <template>
@@ -37,7 +40,8 @@ function toggleTheme() {
     <router-link class="nav-link" @auxclick.prevent to="/"><BrickWall/> Stavební řízení</router-link>
     <router-link class="nav-link" @auxclick.prevent to="/vozidla"><CarFront/> Vozidla</router-link>
     <router-link class="nav-link" @auxclick.prevent to="/stavby"><Building/> Budovy</router-link>
-    <router-link class="nav-link" @auxclick.prevent to="/smlouvy"><Signature/>Nájemní + Paktovní sml. </router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/smlouvy"><Signature/>Nájemní + Pachtovní sml. </router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/usneseni"><ScrollText/> Usnesení</router-link>
     <!-- <router-link class="nav-link" @auxclick.prevent to="/upozorneni"><Bell /> Upozornění</router-link> -->
      <router-link class="nav-link" @auxclick.prevent to="/nastaveni"><Settings/> Nastavení</router-link>
   </nav>
@@ -46,15 +50,12 @@ function toggleTheme() {
     <div class="header" >
       <div class="search-wrapper">
         <Search class="search-icon" />
-        <input v-model="store.search" placeholder="Hledat projekty..." />
+        <input v-model="searchStore.query" placeholder="Hledat" />
+        
       </div>
       <div class="header-actions">
         <button v-if="pageConfig" class="new-project" @click="modalOpen = true">
           <Plus :size="16" /> {{ pageConfig.label }}
-        </button>
-        <button @click="toggleTheme" class="theme-toggle">
-          <Moon v-if="isDark" />
-          <Sun v-else />
         </button>
       </div>
     </div>
@@ -66,6 +67,10 @@ function toggleTheme() {
 
   <ProjectModal :projekt="null" v-if="modalOpen && pageConfig?.modal === 'projekt'" @close="modalOpen = false" />
   <VehicleModal :vozidlo="null" v-if="modalOpen && pageConfig?.modal === 'vozidlo'" @close="modalOpen = false" />
+  <BuildingModal :budova="null" v-if="modalOpen && pageConfig?.modal === 'budova'" @close="modalOpen = false"/>
+  <SmlouvyModal :smlouva="null" v-if="modalOpen && pageConfig?.modal === 'smlouva'" @close="modalOpen = false"/>
+  <UsneseniModal :usneseni="null" v-if="modalOpen && pageConfig?.modal === 'usneseni'" @close="modalOpen = false"/>
+
 </template>
 
 <style>
