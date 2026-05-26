@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, Notification, Tray, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, Notification, Tray, dialog, powerMonitor } from 'electron'
 import { fileURLToPath } from 'node:url'
 
 import fs from 'fs'
@@ -26,6 +26,10 @@ app.on('second-instance', () => {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const sentNotifications = new Set<string>()
+
+function todayKey() {
+  return new Date().toISOString().slice(0, 10)
+}
 export function loadProjects() {
   if (!fs.existsSync(dataPath)) return []
 
@@ -147,7 +151,7 @@ function checkVehicles() {
       if (!v[field] || !v.upozorneni) continue
 
       const termín = new Date(v[field])
-      const key = `${v.id}-${field}`
+      const key = `${v.id}-${field}-${todayKey()}`
       const diffMs = termín.getTime() - now.getTime()
 
       if (diffMs <= v.upozorneni && diffMs > -86400000 * 30 && !sentNotifications.has(key)) {
@@ -174,7 +178,7 @@ function checkSmlouvy() {
   smlouvy.forEach((s: any) => {
     if (!s.datumUkonceni || !s.upozorneni) return
     const termin = new Date(s.datumUkonceni)
-    const key = `smlouva-${s.id}-ukonceni`
+    const key = `smlouva-${s.id}-ukonceni-${todayKey()}`
     const diffMs = termin.getTime() - now.getTime()
     if (diffMs <= s.upozorneni && diffMs > -86400000 * 30 && !sentNotifications.has(key)) {
       sentNotifications.add(key)
@@ -198,7 +202,7 @@ function checkProjects() {
       if (!terminy?.upozorneni) continue
 
       const upozorneniDate = new Date(terminy.upozorneni)
-      const key = `${p.id}-${sekce}-${terminy.upozorneni}`
+      const key = `${p.id}-${sekce}-${terminy.upozorneni}-${todayKey()}`
 
       if (now >= upozorneniDate && !sentNotifications.has(key)) {
         sentNotifications.add(key)
@@ -295,13 +299,19 @@ app.on('activate', () => {
   }
 })
 let tray: Tray | null = null
-app.whenReady().then(() => {
-  app.setLoginItemSettings({ openAtLogin: true })
-  createWindow()
+function runAllChecks() {
   checkProjects()
   checkVehicles()
   checkSmlouvy()
-  setInterval(() => { checkProjects(); checkVehicles(); checkSmlouvy() }, 2 * 60 * 1000)
+}
+
+app.whenReady().then(() => {
+  app.setLoginItemSettings({ openAtLogin: true })
+  createWindow()
+  runAllChecks()
+  setInterval(runAllChecks, 2 * 60 * 1000)
+
+  powerMonitor.on('resume', runAllChecks)
   
   tray = new Tray(path.join(process.env.VITE_PUBLIC, 'logo.png'))
   tray.setToolTip('Stavební povolení')

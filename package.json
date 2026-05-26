@@ -8,6 +8,20 @@
     "build": "vue-tsc && vite build && electron-builder",
     "preview": "vite preview"
   },
+   "build": {
+    "appId": "com.starosta.app",
+    "productName": "Starosta",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist/**/*"
+    ],
+    "mac": {
+      "target": "dmg"
+    }
+  },
   "dependencies": {
     "@lucide/vue": "^1.16.0", 
     "@tanstack/vue-table": "^8.21.3",

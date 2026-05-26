@@ -2,13 +2,14 @@
 import { ref, computed } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import Filters from '../components/Filters.vue';
-import { LayoutDashboard, ChartNoAxesColumn, Clock, Check, Funnel } from 'lucide-vue-next'
+import { LayoutDashboard, ChartNoAxesColumn, Clock, Check, Funnel, BookOpen } from 'lucide-vue-next'
 import ProjectsTable from '../components/ProjectsTable.vue';
 import { useProjectsStore } from '../stores/projects'
 import ProjectModal from '../components/ProjectModal.vue';
 
 const store = useProjectsStore()
 const projectCount = computed(() => store.projectCount)
+const prepCount = computed(() => store.prepCount)
 const continousCount = computed(() => store.continousCount)
 const buildingStartedCount = computed(() => store.buildingStartedCount)
 const completedCount = computed(() => store.completedCount)
@@ -22,9 +23,10 @@ const vybranyProjekt = ref(null)
 
     <div class="stats">
       <StatCard :number="projectCount" title="Celkem projektů" color="#c23243"><template #icon><LayoutDashboard /></template></StatCard>
-      <StatCard :number="continousCount" title="Probíhající" color="#3b82f6"><template #icon><Clock /></template></StatCard>
-      <StatCard :number="buildingStartedCount" title="Stavba Zahájena" color="#f59e0b"><template #icon><ChartNoAxesColumn /></template></StatCard>
-      <StatCard :number="completedCount" title="Dokončené" color="#10b981"><template #icon><Check /></template></StatCard>
+      <StatCard :number="prepCount" title="Přípravná" color="#64748b"><template #icon><BookOpen /></template></StatCard>
+      <StatCard :number="buildingStartedCount" title="Zahájena" color="#f59e0b"><template #icon><ChartNoAxesColumn /></template></StatCard>
+      <StatCard :number="continousCount" title="Probíhá" color="#3b82f6"><template #icon><Clock /></template></StatCard>
+      <StatCard :number="completedCount" title="Ukončena" color="#10b981"><template #icon><Check /></template></StatCard>
     </div>
 
     <div class="projects-wrapper">
@@ -51,7 +53,7 @@ h1 {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
 }
 

@@ -33,6 +33,15 @@ function deleteVehicle() {
   emit('close')
 }
 
+const initialData = JSON.stringify(formData.value)
+
+function handleClose() {
+  if (JSON.stringify(formData.value) !== initialData) {
+    if (!confirm('Změny nebyly uloženy. Opravdu zavřít?')) return
+  }
+  emit('close')
+}
+
 const totalRepairCost = computed(() => {
   const opravy = formData.value.opravy ?? []
   return opravy.reduce((sum: number, o: any) => sum + Number(o.cenaSDph ?? 0), 0)
@@ -139,7 +148,7 @@ const totalRepairCost = computed(() => {
   </div>
 </section>
       <div class="modal-buttons">
-        <button class="close-button" @click="emit('close')">Zavřít</button>
+        <button class="close-button" @click="handleClose">Zavřít</button>
         <button class="save-button" @click="saveVehicle" v-if="props.vozidlo == null">Uložit vozidlo</button>
         <button class="save-button" @click="saveEditedVehicle" v-else>Uložit změny</button>
       </div>

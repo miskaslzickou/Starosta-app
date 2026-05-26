@@ -30,6 +30,15 @@ function remove() {
   store.deleteContract(props.smlouva.id)
   emit('close')
 }
+
+const initialData = JSON.stringify(formData.value)
+
+function handleClose() {
+  if (JSON.stringify(formData.value) !== initialData) {
+    if (!confirm('Změny nebyly uloženy. Opravdu zavřít?')) return
+  }
+  emit('close')
+}
 </script>
 
 <template>
@@ -97,7 +106,7 @@ function remove() {
       </section>
 
       <div class="modal-buttons">
-        <button class="close-button" @click="emit('close')">Zavřít</button>
+        <button class="close-button" @click="handleClose">Zavřít</button>
         <button class="save-button" @click="save" v-if="props.smlouva == null">Uložit smlouvu</button>
         <button class="save-button" @click="saveEdited" v-else>Uložit změny</button>
       </div>

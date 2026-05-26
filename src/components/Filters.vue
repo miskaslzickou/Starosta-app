@@ -6,7 +6,7 @@ const store = useProjectsStore()
 <template>
   <div class="filters">
     <button
-      v-for="state in ['Vše', 'Probíhá', 'Stavba zahájena', 'Hotovo']"
+      v-for="state in ['Vše', 'Přípravná', 'Zahájena', 'Probíhá', 'Ukončena']"
       :class="{ active: store.activeFilter === state }"
       @click="store.activeFilter = state"
     >

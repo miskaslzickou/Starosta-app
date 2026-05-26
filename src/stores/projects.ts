@@ -16,12 +16,16 @@ export const useProjectsStore = defineStore('projekty', () => {
     projects.value = projects.value.map(p => p.id === id ? { ...p, ...data } : p)
   }
   async function init() {
+    const stateMap: Record<string, string> = { 'Stavba zahájena': 'Zahájena', 'Hotovo': 'Ukončena' }
+    let loaded: any[]
     if ((window as any).api) {
-      const loaded = await (window as any).api.loadProjects()
-      if (loaded?.length) projects.value = loaded
+      loaded = await (window as any).api.loadProjects()
     } else {
       const saved = localStorage.getItem('projects')
-      if (saved) projects.value = JSON.parse(saved)
+      loaded = saved ? JSON.parse(saved) : []
+    }
+    if (loaded?.length) {
+      projects.value = loaded.map(p => ({ ...p, stav: stateMap[p.stav] ?? p.stav }))
     }
   }
 
@@ -55,9 +59,10 @@ export const useProjectsStore = defineStore('projekty', () => {
   return result
   })
   const projectCount = computed(() => projects.value.length)
+  const prepCount = computed(() => projects.value.filter(p => p.stav === 'Přípravná').length)
   const continousCount = computed(() => projects.value.filter(p => p.stav === 'Probíhá').length)
-  const buildingStartedCount = computed(() => projects.value.filter(p => p.stav === 'Stavba zahájena').length)
-  const completedCount = computed(() => projects.value.filter(p => p.stav === 'Hotovo').length)
+  const buildingStartedCount = computed(() => projects.value.filter(p => p.stav === 'Zahájena').length)
+  const completedCount = computed(() => projects.value.filter(p => p.stav === 'Ukončena').length)
   const activeFilter = ref('Vše')
-  return { projects, search, addProjects, editProject, deleteProject, filtred, projectCount ,continousCount, buildingStartedCount, completedCount,activeFilter,init}
+  return { projects, search, addProjects, editProject, deleteProject, filtred, projectCount, prepCount, continousCount, buildingStartedCount, completedCount, activeFilter, init }
 })

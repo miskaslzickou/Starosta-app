@@ -37,7 +37,7 @@ const pageConfig = computed(() => pageConfigs[route.path] ?? null)
 <template>
   <nav class="sidebar">
     <h2>Menu</h2>
-    <router-link class="nav-link" @auxclick.prevent to="/"><BrickWall/> Stavební řízení</router-link>
+    <router-link class="nav-link" @auxclick.prevent to="/"><BrickWall/> Projekty</router-link>
     <router-link class="nav-link" @auxclick.prevent to="/vozidla"><CarFront/> Vozidla</router-link>
     <router-link class="nav-link" @auxclick.prevent to="/stavby"><Building/> Budovy</router-link>
     <router-link class="nav-link" @auxclick.prevent to="/smlouvy"><Signature/>Nájemní + Pachtovní sml. </router-link>

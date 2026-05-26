@@ -27,7 +27,7 @@ function initSekce(existing, terminy) {
 
 const formData = ref(props.projekt ? {
   nazev: props.projekt.nazev ?? '',
-  stav: props.projekt.stav ?? 'Probíhá',
+  stav: props.projekt.stav ?? 'Přípravná',
   posledniStav: props.projekt.posledniStav ?? '',
   projekt: initSekce(props.projekt.projekt, { stavebniPovoleni: '', odevzdaniDok: '', upozorneni: '' }),
   vyberoveRizeni: initSekce(props.projekt.vyberoveRizeni, { odevzdaniNabidek: '', vyhlaseni: '', upozorneni: '' }),
@@ -35,7 +35,7 @@ const formData = ref(props.projekt ? {
   zhotovitel: initSekce(props.projekt.zhotovitel, { ukonceniRealizace: '', zapocetRealizace: '', upozorneni: '' }),
 } : {
   nazev: '',
-  stav: 'Probíhá',
+  stav: 'Přípravná',
   posledniStav: '',
   projekt: defaultSekce({ stavebniPovoleni: '', odevzdaniDok: '', upozorneni: '' }),
   vyberoveRizeni: defaultSekce({ odevzdaniNabidek: '', vyhlaseni: '', upozorneni: '' }),
@@ -65,6 +65,15 @@ function deleteProject() {
   store.deleteProject(props.projekt.id)
   emit('close')
 }
+
+const initialData = JSON.stringify(formData.value)
+
+function handleClose() {
+  if (JSON.stringify(formData.value) !== initialData) {
+    if (!confirm('Změny nebyly uloženy. Opravdu zavřít?')) return
+  }
+  emit('close')
+}
 </script>
 
 <template>
@@ -88,9 +97,10 @@ function deleteProject() {
           <div class="field-group">
             <label>Stav</label>
             <select v-model="formData.stav">
+              <option value="Přípravná">Přípravná</option>
+              <option value="Zahájena">Zahájena</option>
               <option value="Probíhá">Probíhá</option>
-              <option value="Stavba zahájena">Stavba zahájena</option>
-              <option value="Hotovo">Hotovo</option>
+              <option value="Ukončena">Ukončena</option>
             </select>
           </div>
           <div class="field-group">
@@ -269,7 +279,7 @@ function deleteProject() {
       </div>
 
       <div class="modal-buttons">
-        <button class="close-button" @click="emit('close')">Zavřít</button>
+        <button class="close-button" @click="handleClose">Zavřít</button>
         <button class="save-button" @click="saveProject" v-if="props.projekt == null">Uložit nový projekt</button>
         <button class="save-button" @click="saveEditedProject" v-else>Uložit změny</button>
       </div>
