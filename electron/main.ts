@@ -240,7 +240,7 @@ let win: BrowserWindow | null
 
 function createWindow() {
   win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, 'logo.png'),
+    icon: path.join(process.env.VITE_PUBLIC, process.platform === 'win32' ? 'logo.ico' : 'logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
     },
@@ -313,7 +313,7 @@ app.whenReady().then(() => {
 
   powerMonitor.on('resume', runAllChecks)
   
-  tray = new Tray(path.join(process.env.VITE_PUBLIC, 'logo.png'))
+  tray = new Tray(path.join(process.env.VITE_PUBLIC, process.platform === 'win32' ? 'logo.ico' : 'logo.png'))
   tray.setToolTip('Stavební povolení')
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Otevřít', click: () => win?.show() },

@@ -102,13 +102,13 @@ function Y() {
     ];
     for (const { field: r, title: a } of u) {
       if (!t[r] || !t.upozorneni) continue;
-      const d = new Date(t[r]), f = `${t.id}-${r}-${k()}`, j = d.getTime() - i.getTime();
-      if (j <= t.upozorneni && j > -864e5 * 30 && !S.has(f)) {
+      const d = new Date(t[r]), f = `${t.id}-${r}-${k()}`, w = d.getTime() - i.getTime();
+      if (w <= t.upozorneni && w > -864e5 * 30 && !S.has(f)) {
         S.add(f);
         let O;
         if (r === "technicka") {
-          const D = Math.round(Math.abs(j) / 864e5);
-          O = j >= 0 ? `${t.nazev} (${t.spz}) – za ${D} dní` : `${t.nazev} (${t.spz}) – vypršela před ${D} dny`;
+          const D = Math.round(Math.abs(w) / 864e5);
+          O = w >= 0 ? `${t.nazev} (${t.spz}) – za ${D} dní` : `${t.nazev} (${t.spz}) – vypršela před ${D} dny`;
         } else
           O = `${t.nazev} (${t.spz})`;
         new b({ title: a, body: O }).show();
@@ -151,7 +151,7 @@ process.env.VITE_PUBLIC = z ? l.join(process.env.APP_ROOT, "public") : J;
 let T = !1, o;
 function x() {
   o = new $({
-    icon: l.join(process.env.VITE_PUBLIC, "logo.png"),
+    icon: l.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png"),
     webPreferences: {
       preload: l.join(F, "preload.mjs")
     }
@@ -169,15 +169,15 @@ s.on("window-all-closed", () => {
 s.on("activate", () => {
   $.getAllWindows().length === 0 && x();
 });
-let w = null;
+let j = null;
 function P() {
   ne(), Y(), ee();
 }
 s.whenReady().then(() => {
-  s.setLoginItemSettings({ openAtLogin: !0 }), x(), P(), setInterval(P, 2 * 60 * 1e3), E.on("resume", P), w = new I(l.join(process.env.VITE_PUBLIC, "logo.png")), w.setToolTip("Stavební povolení"), w.setContextMenu(N.buildFromTemplate([
+  s.setLoginItemSettings({ openAtLogin: !0 }), x(), P(), setInterval(P, 2 * 60 * 1e3), E.on("resume", P), j = new I(l.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png")), j.setToolTip("Stavební povolení"), j.setContextMenu(N.buildFromTemplate([
     { label: "Otevřít", click: () => o == null ? void 0 : o.show() },
     { label: "Ukončit", click: () => s.quit() }
-  ])), w.on("click", () => o == null ? void 0 : o.show());
+  ])), j.on("click", () => o == null ? void 0 : o.show());
 });
 s.setAppUserModelId("Starosta - Databáze věcí");
 s.on("before-quit", () => {
