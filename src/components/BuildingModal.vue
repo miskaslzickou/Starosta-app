@@ -7,7 +7,11 @@ const props = defineProps(['budova'])
 const store = useBuildingStore()
 const emit = defineEmits(['close'])
 
-const formData = ref(props.budova ? JSON.parse(JSON.stringify(props.budova)) : {
+function cloneBuilding(building: any) {
+  return building ? JSON.parse(JSON.stringify(building)) : null
+}
+
+const formData = ref(props.budova ? cloneBuilding(props.budova) : {
   nazev: '',
   cp: '',
   spotreba: {
@@ -19,12 +23,12 @@ const formData = ref(props.budova ? JSON.parse(JSON.stringify(props.budova)) : {
 })
 
 function saveBuilding() {
-  store.addBuilding(formData.value)
+  store.addBuilding(JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 
 function saveEditedBuilding() {
-  store.editBuilding(props.budova.id, formData.value)
+  store.editBuilding(props.budova.id, JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 

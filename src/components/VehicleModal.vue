@@ -7,7 +7,11 @@ const props = defineProps(['vozidlo'])
 const store = useVehicleStore()
 const emit = defineEmits(['close'])
 
-const formData = ref(props.vozidlo ? { ...props.vozidlo } : {
+function cloneVehicle(vehicle: any) {
+  return vehicle ? JSON.parse(JSON.stringify(vehicle)) : null
+}
+
+const formData = ref(props.vozidlo ? cloneVehicle(props.vozidlo) : {
   nazev: '',
   vin: '',
   spz: '',
@@ -19,12 +23,12 @@ const formData = ref(props.vozidlo ? { ...props.vozidlo } : {
 })
 
 function saveVehicle() {
-  store.addVehicle(formData.value)
+  store.addVehicle(JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 
 function saveEditedVehicle() {
-  store.editVehicle(props.vozidlo.id, formData.value)
+  store.editVehicle(props.vozidlo.id, JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 

@@ -25,14 +25,16 @@ function initSekce(existing, terminy) {
   return { ...defaultSekce(terminy), ...existing, terminy: { ...terminy, ...existing.terminy } }
 }
 
+function cloneProjectForm(project) {
+  return project ? JSON.parse(JSON.stringify(project)) : null
+}
+
 const formData = ref(props.projekt ? {
-  nazev: props.projekt.nazev ?? '',
-  stav: props.projekt.stav ?? 'Přípravná',
-  posledniStav: props.projekt.posledniStav ?? '',
-  projekt: initSekce(props.projekt.projekt, { stavebniPovoleni: '', odevzdaniDok: '', upozorneni: '' }),
-  vyberoveRizeni: initSekce(props.projekt.vyberoveRizeni, { odevzdaniNabidek: '', vyhlaseni: '', upozorneni: '' }),
-  dotace: initSekce(props.projekt.dotace, { podpisSmlouvy: '', ukonceniRealizace: '', zva: '', upozorneni: '' }),
-  zhotovitel: initSekce(props.projekt.zhotovitel, { ukonceniRealizace: '', zapocetRealizace: '', upozorneni: '' }),
+  ...cloneProjectForm(props.projekt),
+  projekt: initSekce(cloneProjectForm(props.projekt)?.projekt, { stavebniPovoleni: '', odevzdaniDok: '', upozorneni: '' }),
+  vyberoveRizeni: initSekce(cloneProjectForm(props.projekt)?.vyberoveRizeni, { odevzdaniNabidek: '', vyhlaseni: '', upozorneni: '' }),
+  dotace: initSekce(cloneProjectForm(props.projekt)?.dotace, { podpisSmlouvy: '', ukonceniRealizace: '', zva: '', upozorneni: '' }),
+  zhotovitel: initSekce(cloneProjectForm(props.projekt)?.zhotovitel, { ukonceniRealizace: '', zapocetRealizace: '', upozorneni: '' }),
 } : {
   nazev: '',
   stav: 'Přípravná',
@@ -52,12 +54,12 @@ function deleteKontakt(sekce, index) {
 }
 
 function saveProject() {
-  store.addProjects(formData.value)
+  store.addProjects(JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 
 function saveEditedProject() {
-  store.editProject(props.projekt.id, formData.value)
+  store.editProject(props.projekt.id, JSON.parse(JSON.stringify(formData.value)))
   emit('close')
 }
 

@@ -2,6 +2,15 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useSearchStore } from './search'
 
+function normalizeVehicle(vehicle: any) {
+  return {
+    ...vehicle,
+    opravy: Array.isArray(vehicle?.opravy)
+      ? vehicle.opravy.map((oprava: any) => ({ ...oprava }))
+      : [],
+  }
+}
+
 export const useVehicleStore = defineStore('vehicles', () => {
  const vehicles = ref<any[]>([])
 
@@ -22,10 +31,10 @@ export const useVehicleStore = defineStore('vehicles', () => {
    })
 
   function addVehicle(vehicle: any) {
-    vehicles.value = [...vehicles.value, { id: crypto.randomUUID(), ...vehicle }]
+    vehicles.value = [...vehicles.value, normalizeVehicle({ id: crypto.randomUUID(), ...vehicle })]
   }
   function editVehicle(id: any, data: any) {
-    vehicles.value = vehicles.value.map((v: any) => v.id === id ? { ...v, ...data } : v)
+    vehicles.value = vehicles.value.map((v: any) => v.id === id ? normalizeVehicle({ ...v, ...data }) : v)
   }
   function deleteVehicle(id: any) {
     vehicles.value = vehicles.value.filter((v: any) => v.id !== id)
@@ -34,10 +43,10 @@ export const useVehicleStore = defineStore('vehicles', () => {
   async function init() {
     if ((window as any).api) {
       const loaded = await (window as any).api.loadVehicles()
-      if (loaded?.length) vehicles.value = loaded
+      if (loaded?.length) vehicles.value = loaded.map(normalizeVehicle)
     } else {
       const saved = localStorage.getItem('vehicles')
-      if (saved) vehicles.value = JSON.parse(saved)
+      if (saved) vehicles.value = JSON.parse(saved).map(normalizeVehicle)
     }
   }
 

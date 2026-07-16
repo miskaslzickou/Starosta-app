@@ -4,16 +4,65 @@ import { ref, computed ,watch} from 'vue'
 import { useSearchStore } from './search'
 
 
+const defaultProjectSection = {
+  kontakty: [],
+  poznamka: '',
+  terminy: { stavebniPovoleni: '', odevzdaniDok: '', upozorneni: '' },
+}
+
+const defaultVrizeniSection = {
+  kontakty: [],
+  poznamka: '',
+  terminy: { odevzdaniNabidek: '', vyhlaseni: '', upozorneni: '' },
+}
+
+const defaultDotaceSection = {
+  kontakty: [],
+  poznamka: '',
+  terminy: { podpisSmlouvy: '', ukonceniRealizace: '', zva: '', upozorneni: '' },
+}
+
+const defaultZhotovitelSection = {
+  kontakty: [],
+  poznamka: '',
+  terminy: { ukonceniRealizace: '', zapocetRealizace: '', upozorneni: '' },
+}
+
+function cloneSection(section: any, defaults: any) {
+  const source = section ?? {}
+  const kontakty = Array.isArray(source.kontakty) ? source.kontakty.map((kontakt: any) => ({ ...kontakt })) : []
+
+  return {
+    ...defaults,
+    ...source,
+    kontakty,
+    terminy: {
+      ...defaults.terminy,
+      ...(source.terminy ?? {}),
+    },
+  }
+}
+
+function normalizeProject(project: any) {
+  return {
+    ...project,
+    projekt: cloneSection(project?.projekt, defaultProjectSection),
+    vyberoveRizeni: cloneSection(project?.vyberoveRizeni, defaultVrizeniSection),
+    dotace: cloneSection(project?.dotace, defaultDotaceSection),
+    zhotovitel: cloneSection(project?.zhotovitel, defaultZhotovitelSection),
+  }
+}
+
 
 export const useProjectsStore = defineStore('projekty', () => {
   const projects = ref<any[]>([])
   const search = ref('')
   function addProjects( project:any) {
-    projects.value = [...projects.value, { id: crypto.randomUUID(), ...project }]
+    projects.value = [...projects.value, normalizeProject({ id: crypto.randomUUID(), ...project })]
   }
 
   function editProject(id:any, data:any) {
-    projects.value = projects.value.map(p => p.id === id ? { ...p, ...data } : p)
+    projects.value = projects.value.map(p => p.id === id ? normalizeProject({ ...p, ...data }) : p)
   }
   async function init() {
     const stateMap: Record<string, string> = { 'Stavba zahájena': 'Zahájena', 'Hotovo': 'Ukončena' }
@@ -25,7 +74,7 @@ export const useProjectsStore = defineStore('projekty', () => {
       loaded = saved ? JSON.parse(saved) : []
     }
     if (loaded?.length) {
-      projects.value = loaded.map(p => ({ ...p, stav: stateMap[p.stav] ?? p.stav }))
+      projects.value = loaded.map(p => normalizeProject({ ...p, stav: stateMap[p.stav] ?? p.stav }))
     }
   }
 
