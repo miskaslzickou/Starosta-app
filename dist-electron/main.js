@@ -1,286 +1,204 @@
-import { app, Menu, BrowserWindow, powerMonitor, Tray, ipcMain, dialog, Notification } from "electron";
-import { fileURLToPath } from "node:url";
-import fs from "fs";
-import path from "node:path";
-const dataPath = path.join(app.getPath("userData"), "projects.json");
-const vehiclesPath = path.join(app.getPath("userData"), "vehicles.json");
-const buildingsPath = path.join(app.getPath("userData"), "buildings.json");
-const smlouvyPath = path.join(app.getPath("userData"), "smlouvy.json");
-const usneseniPath = path.join(app.getPath("userData"), "usneseni.json");
-const settingsPath = path.join(app.getPath("userData"), "settings.json");
-Menu.setApplicationMenu(null);
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
-}
-app.on("second-instance", () => {
-  if (win) {
-    if (win.isMinimized()) win.restore();
-    win.show();
-    win.focus();
-  }
+import { app as s, Menu as N, BrowserWindow as $, powerMonitor as E, Tray as I, ipcMain as c, dialog as _, Notification as b } from "electron";
+import { fileURLToPath as R } from "node:url";
+import n from "fs";
+import l from "node:path";
+const p = l.join(s.getPath("userData"), "projects.json"), h = l.join(s.getPath("userData"), "vehicles.json"), v = l.join(s.getPath("userData"), "buildings.json"), y = l.join(s.getPath("userData"), "smlouvy.json"), g = l.join(s.getPath("userData"), "usneseni.json"), m = l.join(s.getPath("userData"), "settings.json");
+N.setApplicationMenu(null);
+s.requestSingleInstanceLock() || s.quit();
+s.on("second-instance", () => {
+  o && (o.isMinimized() && o.restore(), o.show(), o.focus());
 });
-const __dirname$1 = path.dirname(fileURLToPath(import.meta.url));
-const sentNotifications = /* @__PURE__ */ new Set();
-function todayKey() {
+const F = l.dirname(R(import.meta.url)), S = /* @__PURE__ */ new Set();
+function k() {
   return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
 }
-function loadProjects() {
-  if (!fs.existsSync(dataPath)) return [];
-  return JSON.parse(fs.readFileSync(dataPath, "utf-8"));
+function M() {
+  return n.existsSync(p) ? JSON.parse(n.readFileSync(p, "utf-8")) : [];
 }
-function saveProjects(projects) {
-  fs.writeFileSync(dataPath, JSON.stringify(projects, null, 2));
+function U(e) {
+  n.writeFileSync(p, JSON.stringify(e, null, 2));
 }
-function loadVehicles() {
-  if (!fs.existsSync(vehiclesPath)) return [];
-  return JSON.parse(fs.readFileSync(vehiclesPath, "utf-8"));
+function V() {
+  return n.existsSync(h) ? JSON.parse(n.readFileSync(h, "utf-8")) : [];
 }
-function saveVehicles(vehicles) {
-  fs.writeFileSync(vehiclesPath, JSON.stringify(vehicles, null, 2));
+function L(e) {
+  n.writeFileSync(h, JSON.stringify(e, null, 2));
 }
-function loadBuildings() {
-  if (!fs.existsSync(buildingsPath)) return [];
-  return JSON.parse(fs.readFileSync(buildingsPath, "utf-8"));
+function A() {
+  return n.existsSync(v) ? JSON.parse(n.readFileSync(v, "utf-8")) : [];
 }
-function saveBuildings(buildings) {
-  fs.writeFileSync(buildingsPath, JSON.stringify(buildings, null, 2));
+function B(e) {
+  n.writeFileSync(v, JSON.stringify(e, null, 2));
 }
-function loadSmlouvy() {
-  if (!fs.existsSync(smlouvyPath)) return [];
-  return JSON.parse(fs.readFileSync(smlouvyPath, "utf-8"));
+function C() {
+  return n.existsSync(y) ? JSON.parse(n.readFileSync(y, "utf-8")) : [];
 }
-function saveSmlouvy(smlouvy) {
-  fs.writeFileSync(smlouvyPath, JSON.stringify(smlouvy, null, 2));
+function q(e) {
+  n.writeFileSync(y, JSON.stringify(e, null, 2));
 }
-function loadUsneseni() {
-  if (!fs.existsSync(usneseniPath)) return [];
-  return JSON.parse(fs.readFileSync(usneseniPath, "utf-8"));
+function W() {
+  return n.existsSync(g) ? JSON.parse(n.readFileSync(g, "utf-8")) : [];
 }
-function saveUsneseni(usneseni) {
-  fs.writeFileSync(usneseniPath, JSON.stringify(usneseni, null, 2));
+function K(e) {
+  n.writeFileSync(g, JSON.stringify(e, null, 2));
 }
-function loadSettings() {
-  if (!fs.existsSync(settingsPath)) return null;
-  return JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+function Q() {
+  return n.existsSync(m) ? JSON.parse(n.readFileSync(m, "utf-8")) : null;
 }
-function saveSettings(settings) {
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+function Z(e) {
+  n.writeFileSync(m, JSON.stringify(e, null, 2));
 }
-async function exportData(win2) {
-  const { filePath, canceled } = await dialog.showSaveDialog(win2, {
+async function G(e) {
+  const { filePath: i, canceled: t } = await _.showSaveDialog(e, {
     title: "Exportovat zálohu",
     defaultPath: `zaloha-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`,
     filters: [{ name: "JSON záloha", extensions: ["json"] }]
   });
-  if (canceled || !filePath) return { success: false };
-  const backup = {};
-  const files = {
-    projects: dataPath,
-    vehicles: vehiclesPath,
-    buildings: buildingsPath,
-    smlouvy: smlouvyPath,
-    usneseni: usneseniPath,
-    settings: settingsPath
+  if (t || !i) return { success: !1 };
+  const u = {}, r = {
+    projects: p,
+    vehicles: h,
+    buildings: v,
+    smlouvy: y,
+    usneseni: g,
+    settings: m
   };
-  for (const [key, p] of Object.entries(files)) {
-    backup[key] = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf-8")) : [];
-  }
-  fs.writeFileSync(filePath, JSON.stringify(backup, null, 2));
-  return { success: true };
+  for (const [a, d] of Object.entries(r))
+    u[a] = n.existsSync(d) ? JSON.parse(n.readFileSync(d, "utf-8")) : [];
+  return n.writeFileSync(i, JSON.stringify(u, null, 2)), { success: !0 };
 }
-async function importData(win2) {
-  const { filePaths, canceled } = await dialog.showOpenDialog(win2, {
+async function H(e) {
+  const { filePaths: i, canceled: t } = await _.showOpenDialog(e, {
     title: "Importovat zálohu",
     filters: [{ name: "JSON záloha", extensions: ["json"] }],
     properties: ["openFile"]
   });
-  if (canceled || !filePaths[0]) return { success: false };
-  const backup = JSON.parse(fs.readFileSync(filePaths[0], "utf-8"));
-  const files = {
-    projects: dataPath,
-    vehicles: vehiclesPath,
-    buildings: buildingsPath,
-    smlouvy: smlouvyPath,
-    usneseni: usneseniPath,
-    settings: settingsPath
+  if (t || !i[0]) return { success: !1 };
+  const u = JSON.parse(n.readFileSync(i[0], "utf-8")), r = {
+    projects: p,
+    vehicles: h,
+    buildings: v,
+    smlouvy: y,
+    usneseni: g,
+    settings: m
   };
-  for (const [key, p] of Object.entries(files)) {
-    if (backup[key] !== void 0) {
-      fs.writeFileSync(p, JSON.stringify(backup[key], null, 2));
-    }
-  }
-  return { success: true };
+  for (const [a, d] of Object.entries(r))
+    u[a] !== void 0 && n.writeFileSync(d, JSON.stringify(u[a], null, 2));
+  return { success: !0 };
 }
-const sectionLabels = {
+const X = {
   projekt: "Projekt",
   vyberoveRizeni: "Výběrové řízení",
   dotace: "Dotace",
   zhotovitel: "Zhotovitel"
 };
-function checkVehicles() {
-  if (!fs.existsSync(vehiclesPath)) return;
-  const vehicles = JSON.parse(fs.readFileSync(vehiclesPath, "utf-8"));
-  const now = /* @__PURE__ */ new Date();
-  vehicles.forEach((v) => {
-    const checks = [
+function Y() {
+  if (!n.existsSync(h)) return;
+  const e = JSON.parse(n.readFileSync(h, "utf-8")), i = /* @__PURE__ */ new Date();
+  e.forEach((t) => {
+    const u = [
       { field: "technicka", title: "STK – Brzy vyprší" },
       { field: "pojisteni", title: "Vozidlo – Pojištění" }
     ];
-    for (const { field, title } of checks) {
-      if (!v[field] || !v.upozorneni) continue;
-      const termín = new Date(v[field]);
-      const key = `${v.id}-${field}-${todayKey()}`;
-      const diffMs = termín.getTime() - now.getTime();
-      if (diffMs <= v.upozorneni && diffMs > -864e5 * 30 && !sentNotifications.has(key)) {
-        sentNotifications.add(key);
-        let body;
-        if (field === "technicka") {
-          const days = Math.round(Math.abs(diffMs) / 864e5);
-          body = diffMs >= 0 ? `${v.nazev} (${v.spz}) – za ${days} dní` : `${v.nazev} (${v.spz}) – vypršela před ${days} dny`;
-        } else {
-          body = `${v.nazev} (${v.spz})`;
-        }
-        new Notification({ title, body }).show();
+    for (const { field: r, title: a } of u) {
+      if (!t[r] || !t.upozorneni) continue;
+      const d = new Date(t[r]), f = `${t.id}-${r}-${k()}`, w = d.getTime() - i.getTime();
+      if (w <= t.upozorneni && w > -864e5 * 30 && !S.has(f)) {
+        S.add(f);
+        let O;
+        if (r === "technicka") {
+          const D = Math.round(Math.abs(w) / 864e5);
+          O = w >= 0 ? `${t.nazev} (${t.spz}) – za ${D} dní` : `${t.nazev} (${t.spz}) – vypršela před ${D} dny`;
+        } else
+          O = `${t.nazev} (${t.spz})`;
+        new b({ title: a, body: O }).show();
       }
     }
   });
 }
-function checkSmlouvy() {
-  if (!fs.existsSync(smlouvyPath)) return;
-  const smlouvy = JSON.parse(fs.readFileSync(smlouvyPath, "utf-8"));
-  const now = /* @__PURE__ */ new Date();
-  smlouvy.forEach((s) => {
-    if (!s.datumUkonceni || !s.upozorneni) return;
-    const termin = new Date(s.datumUkonceni);
-    const key = `smlouva-${s.id}-ukonceni-${todayKey()}`;
-    const diffMs = termin.getTime() - now.getTime();
-    if (diffMs <= s.upozorneni && diffMs > -864e5 * 30 && !sentNotifications.has(key)) {
-      sentNotifications.add(key);
-      const days = Math.round(Math.abs(diffMs) / 864e5);
-      const body = diffMs >= 0 ? `${s.najemnik} – za ${days} dní` : `${s.najemnik} – vypršela před ${days} dny`;
-      new Notification({ title: "Smlouva – Blíží se ukončení", body }).show();
+function ee() {
+  if (!n.existsSync(y)) return;
+  const e = JSON.parse(n.readFileSync(y, "utf-8")), i = /* @__PURE__ */ new Date();
+  e.forEach((t) => {
+    if (!t.datumUkonceni || !t.upozorneni) return;
+    const u = new Date(t.datumUkonceni), r = `smlouva-${t.id}-ukonceni-${k()}`, a = u.getTime() - i.getTime();
+    if (a <= t.upozorneni && a > -864e5 * 30 && !S.has(r)) {
+      S.add(r);
+      const d = Math.round(Math.abs(a) / 864e5), f = a >= 0 ? `${t.najemnik} – za ${d} dní` : `${t.najemnik} – vypršela před ${d} dny`;
+      new b({ title: "Smlouva – Blíží se ukončení", body: f }).show();
     }
   });
 }
-function checkProjects() {
-  if (!fs.existsSync(dataPath)) return;
-  const projects = JSON.parse(fs.readFileSync(dataPath, "utf-8"));
-  const now = /* @__PURE__ */ new Date();
-  projects.forEach((p) => {
-    var _a;
-    for (const sekce of ["projekt", "vyberoveRizeni", "dotace", "zhotovitel"]) {
-      const terminy = (_a = p[sekce]) == null ? void 0 : _a.terminy;
-      if (!(terminy == null ? void 0 : terminy.upozorneni)) continue;
-      const upozorneniDate = new Date(terminy.upozorneni);
-      const key = `${p.id}-${sekce}-${terminy.upozorneni}-${todayKey()}`;
-      if (now >= upozorneniDate && !sentNotifications.has(key)) {
-        sentNotifications.add(key);
-        new Notification({
-          title: `Upozornění – ${sectionLabels[sekce]}`,
-          body: `${p.nazev}`
-        }).show();
-      }
+function ne() {
+  if (!n.existsSync(p)) return;
+  const e = JSON.parse(n.readFileSync(p, "utf-8")), i = /* @__PURE__ */ new Date();
+  e.forEach((t) => {
+    var u;
+    for (const r of ["projekt", "vyberoveRizeni", "dotace", "zhotovitel"]) {
+      const a = (u = t[r]) == null ? void 0 : u.terminy;
+      if (!(a != null && a.upozorneni)) continue;
+      const d = new Date(a.upozorneni), f = `${t.id}-${r}-${a.upozorneni}-${k()}`;
+      i >= d && !S.has(f) && (S.add(f), new b({
+        title: `Upozornění – ${X[r]}`,
+        body: `${t.nazev}`
+      }).show());
     }
   });
 }
-process.env.APP_ROOT = path.join(__dirname$1, "..");
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let isQuitting = false;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
-    icon: path.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png"),
+process.env.APP_ROOT = l.join(F, "..");
+const z = process.env.VITE_DEV_SERVER_URL, ae = l.join(process.env.APP_ROOT, "dist-electron"), J = l.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = z ? l.join(process.env.APP_ROOT, "public") : J;
+let T = !1, o;
+function x() {
+  o = new $({
+    icon: l.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png"),
     webPreferences: {
-      preload: path.join(__dirname$1, "preload.mjs")
+      preload: l.join(F, "preload.mjs")
     }
-  });
-  win.on("close", (e) => {
-    if (!isQuitting) {
-      e.preventDefault();
-      win == null ? void 0 : win.hide();
-    }
-  });
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path.join(RENDERER_DIST, "index.html"));
-  }
-  ipcMain.handle("load-projects", () => loadProjects());
-  ipcMain.handle("save-projects", (_event, projects) => saveProjects(projects));
-  ipcMain.handle("load-vehicles", () => loadVehicles());
-  ipcMain.handle("save-vehicles", (_event, vehicles) => saveVehicles(vehicles));
-  ipcMain.handle("load-buildings", () => loadBuildings());
-  ipcMain.handle("save-buildings", (_event, buildings) => saveBuildings(buildings));
-  ipcMain.handle("load-smlouvy", () => loadSmlouvy());
-  ipcMain.handle("save-smlouvy", (_event, smlouvy) => saveSmlouvy(smlouvy));
-  ipcMain.handle("load-usneseni", () => loadUsneseni());
-  ipcMain.handle("save-usneseni", (_event, usneseni) => saveUsneseni(usneseni));
-  ipcMain.handle("load-settings", () => loadSettings());
-  ipcMain.handle("save-settings", (_event, settings) => saveSettings(settings));
-  ipcMain.handle("export-data", () => exportData(win));
-  ipcMain.handle("import-data", () => importData(win));
-  ipcMain.handle("relaunch", () => {
-    app.relaunch();
-    app.exit();
+  }), o.on("close", (e) => {
+    T || (e.preventDefault(), o == null || o.hide());
+  }), o.webContents.on("did-finish-load", () => {
+    o == null || o.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), z ? o.loadURL(z) : o.loadFile(l.join(J, "index.html")), c.handle("load-projects", () => M()), c.handle("save-projects", (e, i) => U(i)), c.handle("load-vehicles", () => V()), c.handle("save-vehicles", (e, i) => L(i)), c.handle("load-buildings", () => A()), c.handle("save-buildings", (e, i) => B(i)), c.handle("load-smlouvy", () => C()), c.handle("save-smlouvy", (e, i) => q(i)), c.handle("load-usneseni", () => W()), c.handle("save-usneseni", (e, i) => K(i)), c.handle("load-settings", () => Q()), c.handle("save-settings", (e, i) => Z(i)), c.handle("export-data", () => G(o)), c.handle("import-data", () => H(o)), c.handle("relaunch", () => {
+    s.relaunch(), s.exit();
   });
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+s.on("window-all-closed", () => {
+  process.platform !== "darwin" && (s.quit(), o = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+s.on("activate", () => {
+  $.getAllWindows().length === 0 && x();
 });
-let tray = null;
-function runAllChecks() {
-  checkProjects();
-  checkVehicles();
-  checkSmlouvy();
+let j = null;
+function P() {
+  ne(), Y(), ee();
 }
-app.whenReady().then(() => {
-  app.setLoginItemSettings({ openAtLogin: true });
-  createWindow();
-  runAllChecks();
-  setInterval(runAllChecks, 2 * 60 * 1e3);
-  powerMonitor.on("resume", runAllChecks);
-  tray = new Tray(path.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png"));
-  tray.setToolTip("Stavební povolení");
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: "Otevřít", click: () => win == null ? void 0 : win.show() },
-    { label: "Ukončit", click: () => app.quit() }
-  ]));
-  tray.on("click", () => win == null ? void 0 : win.show());
+s.whenReady().then(() => {
+  s.setLoginItemSettings({ openAtLogin: !0 }), x(), P(), setInterval(P, 2 * 60 * 1e3), E.on("resume", P), j = new I(l.join(process.env.VITE_PUBLIC, process.platform === "win32" ? "logo.ico" : "logo.png")), j.setToolTip("Stavební povolení"), j.setContextMenu(N.buildFromTemplate([
+    { label: "Otevřít", click: () => o == null ? void 0 : o.show() },
+    { label: "Ukončit", click: () => s.quit() }
+  ])), j.on("click", () => o == null ? void 0 : o.show());
 });
-app.setAppUserModelId("Starosta - Databáze věcí");
-app.on("before-quit", () => {
-  isQuitting = true;
+s.setAppUserModelId("Starosta - Databáze věcí");
+s.on("before-quit", () => {
+  T = !0;
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL,
-  exportData,
-  importData,
-  loadBuildings,
-  loadProjects,
-  loadSettings,
-  loadSmlouvy,
-  loadUsneseni,
-  loadVehicles,
-  saveBuildings,
-  saveProjects,
-  saveSettings,
-  saveSmlouvy,
-  saveUsneseni,
-  saveVehicles
+  ae as MAIN_DIST,
+  J as RENDERER_DIST,
+  z as VITE_DEV_SERVER_URL,
+  G as exportData,
+  H as importData,
+  A as loadBuildings,
+  M as loadProjects,
+  Q as loadSettings,
+  C as loadSmlouvy,
+  W as loadUsneseni,
+  V as loadVehicles,
+  B as saveBuildings,
+  U as saveProjects,
+  Z as saveSettings,
+  q as saveSmlouvy,
+  K as saveUsneseni,
+  L as saveVehicles
 };
